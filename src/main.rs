@@ -126,7 +126,9 @@ fn get_links_from_url(host: &str, html_text: String) -> (Vec<String>, Vec<String
             if link.starts_with("http") {
                 external_links.push(String::from(link))
             } else {
-                internal_links.push(host.to_owned() + link)
+                if link != "/" {
+                    internal_links.push(host.to_owned() + link)
+                }
             }
         });
 

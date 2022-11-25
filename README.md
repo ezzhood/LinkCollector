@@ -1,20 +1,20 @@
 To run
 
 ```bash
-    cargo run
+cargo run
 ```
 
 To build:
 
 ```bash
-    cargo build --release
+cargo build --release
 ```
 
 after building
 
 ```bash
-    cd target/release
-    ./link_rust
+cd target/release
+./link_rust
 ```
 
 Server address: `http://0.0.0.0:4000`
