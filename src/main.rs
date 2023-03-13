@@ -21,7 +21,6 @@ struct LinkQuery {
 async fn main() -> std::io::Result<()> {
     let server =
         HttpServer::new(move || App::new().route("/links", web::get().to(links_get_handler)))
-            // .workers(1)
             .listen(TcpListener::bind("0.0.0.0:4000").unwrap())?
             .run();
 
@@ -61,7 +60,10 @@ async fn links_get_handler(query: web::Query<LinkQuery>) -> HttpResponse {
                 let url = url.clone();
 
                 let handle = thread::spawn(move || {
-                    let res_text = reqwest::blocking::get(url).unwrap().text().unwrap();
+                    let res_text = match reqwest::blocking::get(&url) {
+                        Ok(response) => response.text().unwrap(),
+                        Err(_) => String::from(""), // TODO: set as broken link or unreachable
+                    };
 
                     let (new_internals, new_externals) =
                         get_links_from_url(&host.lock().unwrap(), res_text);
@@ -82,8 +84,6 @@ async fn links_get_handler(query: web::Query<LinkQuery>) -> HttpResponse {
                 });
 
                 thread_handlers.push(handle);
-            } else {
-                continue;
             }
         }
 
@@ -124,7 +124,13 @@ fn get_links_from_url(host: &str, html_text: String) -> (Vec<String>, Vec<String
         .filter_map(|n| n.value().attr("href"))
         .for_each(|link| {
             if link.starts_with("http") {
-                external_links.push(String::from(link))
+                if !link.starts_with(host) {
+                    external_links.push(String::from(link));
+                } else {
+                    internal_links.push(String::from(link));
+                }
+            } else if link.starts_with("?") {
+                internal_links.push(host.to_owned() + "/" + link);
             } else {
                 if link != "/" {
                     internal_links.push(host.to_owned() + link)
