@@ -27,9 +27,13 @@ async fn main() -> std::io::Result<()> {
     server.await
 }
 
-async fn links_get_handler(query: web::Query<LinkQuery>) -> HttpResponse {
+async fn links_get_handler(mut query: web::Query<LinkQuery>) -> HttpResponse {
     // maximum number of threads to know how many parallel works can be done
     let max_thread_number = available_parallelism().unwrap().get();
+    // removing slash at the end of seed host
+    if query.url.ends_with("/") {
+        query.url.pop();
+    }
     // host is prefixed in parallel task so value of it shared among all threads
     let host = Arc::new(Mutex::new(query.url.to_owned()));
 
